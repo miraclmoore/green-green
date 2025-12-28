@@ -12,7 +12,7 @@ export default async function CropDetailPage({ params }: { params: { id: string 
   const supabase = await createClient()
 
   // Fetch crop with all related data
-  const { data: crop } = await supabase
+  const { data: cropData } = await supabase
     .from('crops')
     .select(`
       *,
@@ -22,6 +22,8 @@ export default async function CropDetailPage({ params }: { params: { id: string 
     `)
     .eq('id', params.id)
     .single()
+
+  const crop = cropData as any // Type assertion to handle Supabase's complex types
 
   if (!crop) {
     notFound()

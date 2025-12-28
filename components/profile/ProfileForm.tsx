@@ -37,9 +37,9 @@ export default function ProfileForm({ initialData, userId }: ProfileFormProps) {
     setError(null)
 
     try {
-      const { error: upsertError } = await supabase
+      const { error: upsertError } = await (supabase
         .from('user_profiles')
-        .upsert({
+        .upsert as any)({
           user_id: userId,
           location_zip: formData.location_zip || null,
           location_state: formData.location_state || null,

@@ -1,8 +1,11 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { getPersonalizedCrops } from '@/lib/calculator'
+import { getPersonalizedCrops, type CalculatedCrop } from '@/lib/calculator'
 import DashboardClient from '@/components/dashboard/DashboardClient'
 import type { CropWithPricing } from '@/lib/calculator'
+import type { Database } from '@/types/database.types'
+
+type UserProfile = Database['public']['Tables']['user_profiles']['Row']
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -14,11 +17,13 @@ export default async function DashboardPage() {
   }
 
   // Get user profile
-  const { data: profile } = await supabase
+  const { data: profileData, error } = await supabase
     .from('user_profiles')
     .select('*')
     .eq('user_id', user.id)
-    .single()
+    .maybeSingle()
+
+  const profile = profileData as UserProfile | null
 
   // Get all crops with pricing
   const { data: crops } = await supabase
@@ -32,20 +37,22 @@ export default async function DashboardPage() {
   const cropsWithPricing = (crops || []) as unknown as CropWithPricing[]
 
   // Calculate personalized recommendations
-  const personalizedCrops = profile 
-    ? getPersonalizedCrops(cropsWithPricing, profile)
-    : []
+  let personalizedCrops: CalculatedCrop[] = []
+  let hasCompleteProfile = false
 
-  // If no profile, show all crops sorted by default profitability
-  // (assuming 1000 sq ft and farmers market channel)
-  const displayCrops = personalizedCrops.length > 0 
-    ? personalizedCrops 
-    : []
+  if (profile && !error) {
+    personalizedCrops = getPersonalizedCrops(cropsWithPricing, profile)
+    hasCompleteProfile = 
+      typeof profile.growing_space_sqft === 'number' && 
+      profile.growing_space_sqft > 0 && 
+      Array.isArray(profile.sales_channels) && 
+      profile.sales_channels.length > 0
+  }
 
   return (
     <DashboardClient 
-      crops={displayCrops} 
-      hasProfile={!!profile && !!(profile.growing_space_sqft && profile.sales_channels?.length)} 
+      crops={personalizedCrops} 
+      hasProfile={hasCompleteProfile} 
     />
   )
 }

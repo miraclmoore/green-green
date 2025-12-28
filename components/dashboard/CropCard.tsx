@@ -25,7 +25,7 @@ export default function CropCard({ crop }: CropCardProps) {
 
   return (
     <Link href={`/crops/${crop.id}`}>
-      <div className={`p-6 rounded-lg border-2 ${profitabilityColors[profitability Level]} hover:shadow-lg transition-shadow cursor-pointer h-full`}>
+      <div className={`p-6 rounded-lg border-2 ${profitabilityColors[profitabilityLevel]} hover:shadow-lg transition-shadow cursor-pointer h-full`}>
         <div className="flex justify-between items-start mb-3">
           <div>
             <h3 className="text-lg font-bold text-gray-900">{crop.name}</h3>
